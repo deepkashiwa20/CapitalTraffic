@@ -1,0 +1,15 @@
+experiment_city tokyo
+experiment_month 202111
+model_name HistoricalAverage
+channnel_in 1
+channnel_out 1
+tokyo 202111 TIMESTEP_IN, TIMESTEP_OUT 6 6
+YS.shape, YS_pred.shape, (3307, 6, 1609, 1) (3307, 6, 1609, 1)
+**************************************** 
+all pred steps, HistoricalAverage, test, MSE, RMSE, MAE, MAPE, 625.2141862966, 25.0042833590, 19.9762399761, 35.8833926714 
+1 step, HistoricalAverage, test, MSE, RMSE, MAE, MAPE, 625.1572304676, 25.0031444116, 19.9740523967, 35.8757106362 
+2 step, HistoricalAverage, test, MSE, RMSE, MAE, MAPE, 625.1961918675, 25.0039235295, 19.9751668169, 35.8779272201 
+3 step, HistoricalAverage, test, MSE, RMSE, MAE, MAPE, 625.1888446075, 25.0037766069, 19.9749937633, 35.8789566518 
+4 step, HistoricalAverage, test, MSE, RMSE, MAE, MAPE, 625.3140458805, 25.0062801288, 19.9791029719, 35.8890978842 
+5 step, HistoricalAverage, test, MSE, RMSE, MAE, MAPE, 625.2579338289, 25.0051581444, 19.9779180933, 35.8899106376 
+6 step, HistoricalAverage, test, MSE, RMSE, MAE, MAPE, 625.1708711278, 25.0034171890, 19.9762058144, 35.8887529988 

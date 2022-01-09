@@ -1,0 +1,38 @@
+[202105]
+N_link = 2841
+# traffic_path = /data2/jiang/workToyota/data/CAN_Aggregated/MAY_CAN_CAPITAL_Reindexed_FilledNA_IncidentAccident.csv.gz
+traffic_path = ../data/ShutokoTraffic_202105.csv.gz
+adjdis_path = /data2/jiang/Toyota/graph_data/adjdis.npy
+adj01_path = /data2/jiang/Toyota/graph_data/adj01.npy
+adj01_path_csv = /data2/jiang/Toyota/graph_data/capital_01_relation.csv
+adjdis_path_csv = /data2/jiang/Toyota/graph_data/capital_distance_relation.csv
+road_path = /data2/jiang/Toyota/graph_data/capital_graph_link_info.csv
+subroad_path = /data2/jiang/Toyota/graph_data/Tokyo_road_idx.csv
+test_month = ['202105']
+train_month = ['202110', '202111']
+
+[202110]
+N_link = 2841
+# traffic_path = /data2/jiang/workToyota/data/CAN_Aggregated/OCT_CAN_CAPITAL_Reindexed_FilledNA_IncidentAccident.csv.gz
+traffic_path = ../data/ShutokoTraffic_202110.csv.gz
+adjdis_path = /data2/jiang/Toyota/graph_data/adjdis.npy
+adj01_path = /data2/jiang/Toyota/graph_data/adj01.npy
+adj01_path_csv = /data2/jiang/Toyota/graph_data/capital_01_relation.csv
+adjdis_path_csv = /data2/jiang/Toyota/graph_data/capital_distance_relation.csv
+road_path = /data2/jiang/Toyota/graph_data/capital_graph_link_info.csv
+subroad_path = /data2/jiang/Toyota/graph_data/Tokyo_road_idx.csv
+test_month = ['202110']
+train_month = ['202105', '202111']
+
+[202111] 
+N_link = 2841
+# traffic_path = /data2/jiang/workToyota/data/CAN_Aggregated/NOV_CAN_CAPITAL_Reindexed_FilledNA_IncidentAccident.csv.gz
+traffic_path = ../data/ShutokoTraffic_202111.csv.gz
+adjdis_path = /data2/jiang/Toyota/graph_data/adjdis.npy
+adj01_path = /data2/jiang/Toyota/graph_data/adj01.npy
+adj01_path_csv = /data2/jiang/Toyota/graph_data/capital_01_relation.csv
+adjdis_path_csv = /data2/jiang/Toyota/graph_data/capital_distance_relation.csv
+road_path = /data2/jiang/Toyota/graph_data/capital_graph_link_info.csv
+subroad_path = /data2/jiang/Toyota/graph_data/Tokyo_road_idx.csv
+test_month = ['202111']
+train_month = ['202105', '202110']
