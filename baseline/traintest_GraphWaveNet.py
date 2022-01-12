@@ -115,8 +115,6 @@ def trainModel(name, mode, XS, YS):
     YS, YS_pred = YS.reshape(-1, opt.seq_len, YS.shape[-1]), YS_pred.reshape(-1, opt.seq_len, YS_pred.shape[-1])
     logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
     MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS, YS_pred)
-    with open(score_path, 'a') as f:
-        f.write("%s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f\n" % (name, mode, MSE, RMSE, MAE, MAPE))
     logger.info('*' * 40)
     logger.info("%s, %s, Torch MSE, %.10e, %.10f" % (name, mode, torch_score, torch_score))
     logger.info("%s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f" % (name, mode, MSE, RMSE, MAE, MAPE))

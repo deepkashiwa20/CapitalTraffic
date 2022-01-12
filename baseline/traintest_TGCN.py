@@ -5,7 +5,7 @@ import math
 import numpy as np
 import pandas as pd
 import scipy.sparse as ss
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from datetime import datetime
 import time
 import torch
@@ -17,20 +17,18 @@ import argparse
 from configparser import ConfigParser
 import logging
 import Metrics
-from DCRNN import *
+from TGCN import *
 from Utils import *
 
 def refineXSYS(XS, YS):
-    XS, YS = XS[:, :, :, :opt.channelin], YS[:, :, :, :opt.channelout]
+    XS, YS = XS[:, :, :, 0], YS[:, :, :, 0]
     return XS, YS
 
 def getModel():
     dist_mx = get_adj(adj_path, subroad_path)
-    adj_mx = norm_dist_mx(dist_mx)
-    adj_mx = [sym_adj(adj_mx)]  # "symnadj"
-    # adj_mx = [asym_adj(adj_mx), asym_adj(np.transpose(adj_mx))] # "double_transition"
-    model = DCRNN(device, num_nodes=num_variable, input_dim=opt.channelin, output_dim=opt.channelout, out_horizon=opt.seq_len, P=adj_mx).to(device)
-    summary(model, (opt.his_len, num_variable, opt.channelin), device=device)
+    A = norm_dist_mx(dist_mx)
+    adj_mx = sym_adj(A)
+    model = TGCN(adj_mx, horizon=opt.seq_len).to(device)
     return model
 
 def evaluateModel(model, criterion, data_iter):
@@ -106,10 +104,7 @@ def trainModel(name, mode, XS, YS):
     torch_score = evaluateModel(model, criterion, train_iter)
     YS_pred = predictModel(model, torch.utils.data.DataLoader(trainval_data, opt.batch_size, shuffle=False))
     logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
-    YS, YS_pred = np.squeeze(YS), np.squeeze(YS_pred) 
-    YS, YS_pred = YS.reshape(-1, YS.shape[-1]), YS_pred.reshape(-1, YS_pred.shape[-1])
-    YS, YS_pred = scaler.inverse_transform(YS), scaler.inverse_transform(YS_pred)
-    YS, YS_pred = YS.reshape(-1, opt.seq_len, YS.shape[-1]), YS_pred.reshape(-1, opt.seq_len, YS_pred.shape[-1])
+    YS, YS_pred = scaler.inverse_transform(np.squeeze(YS)), scaler.inverse_transform(np.squeeze(YS_pred))
     logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
     MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS, YS_pred)
     logger.info('*' * 40)
@@ -130,18 +125,15 @@ def testModel(name, mode, XS, YS):
     torch_score = evaluateModel(model, criterion, test_iter)
     YS_pred = predictModel(model, test_iter)
     logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
-    YS, YS_pred = np.squeeze(YS), np.squeeze(YS_pred) 
-    YS, YS_pred = YS.reshape(-1, YS.shape[-1]), YS_pred.reshape(-1, YS_pred.shape[-1])
-    YS, YS_pred = scaler.inverse_transform(YS), scaler.inverse_transform(YS_pred)
-    YS, YS_pred = YS.reshape(-1, opt.seq_len, YS.shape[-1]), YS_pred.reshape(-1, opt.seq_len, YS_pred.shape[-1])
+    YS, YS_pred = scaler.inverse_transform(np.squeeze(YS)), scaler.inverse_transform(np.squeeze(YS_pred))
     logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
     # np.save(path + f'/{name}_prediction.npy', YS_pred)
     # np.save(path + f'/{name}_groundtruth.npy', YS)
     MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS, YS_pred)
     logger.info('*' * 40)
     logger.info("%s, %s, Torch MSE, %.10e, %.10f" % (name, mode, torch_score, torch_score))
-    f = open(score_path, 'a')
     logger.info("all pred steps, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f" % (name, mode, MSE, RMSE, MAE, MAPE))
+    f = open(score_path, 'a')
     f.write("all pred steps, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f\n" % (name, mode, MSE, RMSE, MAE, MAPE))
     for i in range(opt.seq_len):
         MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS[:, i, :], YS_pred[:, i, :])
@@ -264,13 +256,12 @@ def main():
     trainXS, trainYS = refineXSYS(trainXS, trainYS)
     logger.info('TRAIN XS.shape YS,shape', trainXS.shape, trainYS.shape)
     trainModel(model_name, 'train', trainXS, trainYS)
-    
+        
     logger.info(opt.city, opt.month, 'testing started', time.ctime())
     testXS, testYS = getXSYS(test_data, opt.his_len, opt.seq_len)
     testXS, testYS = refineXSYS(testXS, testYS)
-    logger.info('TEST XS.shape YS,shape', testXS.shape, testYS.shape)
+    logger.info('TEST XS.shape, YS.shape', testXS.shape, testYS.shape)
     testModel(model_name, 'test', testXS, testYS)
-
 
     
 if __name__ == '__main__':
