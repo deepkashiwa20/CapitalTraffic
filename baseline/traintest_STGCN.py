@@ -154,7 +154,6 @@ def trainModel(name, mode, XS, YS):
     logger.info("%s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f" % (name, mode, MSE, RMSE, MAE, MAPE))
     logger.info('Model Training Ended ...', time.ctime())
 
-    
 def testModel(name, mode, XS, YS, YS_multi, YS_ex_multi):
     logger.info('Model Testing Started ...', time.ctime())
     logger.info('opt.his_len, opt.seq_len', opt.his_len, opt.seq_len)
@@ -186,8 +185,8 @@ def testModel(name, mode, XS, YS, YS_multi, YS_ex_multi):
     MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS_multi, YS_pred_multi)
     logger.info('*' * 40)
     logger.info("%s, %s, Torch MSE, %.10e, %.10f" % (name, mode, torch_score, torch_score))
-    f = open(score_path, 'a')
     logger.info("all pred steps, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f" % (name, mode, MSE, RMSE, MAE, MAPE))
+    f = open(score_path, 'a')
     f.write("all pred steps, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f\n" % (name, mode, MSE, RMSE, MAE, MAPE))
     for i in range(opt.seq_len):
         MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS_multi[:, i, :], YS_pred_multi[:, i, :])
@@ -325,4 +324,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
