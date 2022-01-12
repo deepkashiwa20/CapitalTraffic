@@ -19,6 +19,11 @@ test_month = ['202111']
 train_month = ['202105', '202110']
 traffic_path = ../data/capitaltraffic_202111.csv.gz
 
+[202112] 
+test_month = ['202112']
+train_month = ['202105', '202110', '202111']
+traffic_path = ../data/capitaltraffic_202112.csv.gz
+
 [tokyo]
 subroad_path = ../data/tokyo_road_idx.csv
 
