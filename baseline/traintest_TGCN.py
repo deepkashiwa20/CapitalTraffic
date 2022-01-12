@@ -27,7 +27,7 @@ def refineXSYS(XS, YS):
 def getModel():
     dist_mx = get_adj(adj_path, subroad_path)
     A = norm_dist_mx(dist_mx)
-    adj_mx = sym_adj(A)
+    adj_mx = symmetrical_normalized_matrix(A)
     model = TGCN(adj_mx, horizon=opt.seq_len).to(device)
     return model
 
