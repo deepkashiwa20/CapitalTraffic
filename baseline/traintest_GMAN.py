@@ -61,11 +61,13 @@ def loadSE(file_path):
 
 def getModel():
     SE_path = f'../data/{opt.city}_road_embedding.txt'
-    SE = loadSE(SE_path).to(device=device)
+    SE = loadSE(SE_path).to(device)
     logger.info('SE.shape', SE.size())
     model = GMAN(SE, SE_dim=32, TE_dim=32, timestep_in=opt.his_len, channel_in=opt.channelin, channel_out=opt.channelout, 
-                 device=device, statt_layers=1, att_heads=4, att_dims=8, bn_decay=0.1).to(device)
-    summary(model, [(opt.his_len, num_variable, opt.channelin), (opt.his_len+opt.seq_len, 32)], device=device)
+                 device=device, statt_layers=1, att_heads=4, att_dims=8, bn_decay=0.1)
+    model = nn.DataParallel(model, device_ids=[0, 1, 2, 3])
+    model.to(device)
+    # summary(model, [(opt.his_len, num_variable, opt.channelin), (opt.his_len+opt.seq_len, 32)], device=device)
     return model
 
 def evaluateModel(model, criterion, data_iter):
@@ -190,7 +192,7 @@ def testModel(name, mode, XS, YS, TE):
 parser = argparse.ArgumentParser()
 parser.add_argument("--loss", type=str, default='MAE', help="MAE, MSE, SELF")
 parser.add_argument("--epoch", type=int, default=200, help="number of epochs of training")
-parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
+parser.add_argument("--batch_size", type=int, default=32, help="size of the batches")
 parser.add_argument("--lr", type=float, default=0.001, help="adam: learning rate")
 parser.add_argument("--patience", type=float, default=10, help="patience used for early stop")
 parser.add_argument('--val_ratio', type=float, default=0.25, help='the ratio of validation data among the trainval ratio')
@@ -268,7 +270,8 @@ logger.info('feature_time', opt.time)
 logger.info('feature_history', opt.history)
 #####################################################################################################
 
-device = torch.device("cuda:{}".format(opt.gpu)) if torch.cuda.is_available() else torch.device("cpu")
+# Multi-GPU "cuda"
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 np.random.seed(opt.seed)
 torch.manual_seed(opt.seed)
 if torch.cuda.is_available():

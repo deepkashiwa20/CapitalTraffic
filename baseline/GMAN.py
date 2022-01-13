@@ -291,7 +291,7 @@ class STEmbedding(nn.Module):
         self.device = device
 
     def forward(self, SE, TE):
-        SE = SE.unsqueeze(0).unsqueeze(0)
+        SE = SE.unsqueeze(0).unsqueeze(0).to(device=self.device)
         SE = self.FC_se(SE)
         TE = TE.unsqueeze(dim=2).to(device=self.device)
         TE = self.FC_te(TE)
@@ -319,7 +319,7 @@ class GMAN(nn.Module):
         d = att_dims
         D = K * d 
         self.num_his = timestep_in
-        self.SE = SE 
+        self.SE = SE
         self.STEmbedding = STEmbedding(SE_dim, TE_dim, D, bn_decay, device)
         self.STAttBlock_1 = nn.ModuleList([STAttBlock(K, d, bn_decay) for _ in range(L)])
         self.STAttBlock_2 = nn.ModuleList([STAttBlock(K, d, bn_decay) for _ in range(L)])

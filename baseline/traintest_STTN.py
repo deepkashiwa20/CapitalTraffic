@@ -26,7 +26,10 @@ def refineXSYS(XS, YS):
 
 def getModel():
     model = STTN(in_channels=opt.channelin, embed_size=8, num_layers=1, input_step=opt.his_len, pred_step=opt.seq_len, 
-                 heads=4, forward_expansion=8, gpu=device, dropout=0).to(device)
+                 heads=4, forward_expansion=8, gpu=device, dropout=0)
+    # # Multi-GPU
+    model = nn.DataParallel(model, device_ids=[0, 1, 2, 3])
+    model.to(device)
     return model
 
 def evaluateModel(model, criterion, data_iter):
@@ -228,7 +231,8 @@ logger.info('feature_time', opt.time)
 logger.info('feature_history', opt.history)
 #####################################################################################################
 
-device = torch.device("cuda:{}".format(opt.gpu)) if torch.cuda.is_available() else torch.device("cpu")
+# Multi-GPU "cuda"
+device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 np.random.seed(opt.seed)
 torch.manual_seed(opt.seed)
 if torch.cuda.is_available():
