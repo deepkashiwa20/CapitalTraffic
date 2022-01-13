@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import jpholiday
 
 def generate_data_plus(months, months_path, road_path):
     for month in months:
@@ -73,3 +74,16 @@ def getXSYS(data_list, his_len, seq_len):
         YS.append(YS_)
     XS, YS = np.vstack(XS), np.vstack(YS)
     return XS, YS
+
+def get_onehottime(data_path):
+    data = pd.read_csv(data_path)
+    data['gps_timestamp'] = pd.to_datetime(data['gps_timestamp'])
+    df = pd.DataFrame({'time':data['gps_timestamp'].unique()})  
+    df['dayofweek'] = df.time.dt.weekday
+    df['hourofday'] = df.time.dt.hour
+    df['isholiday'] = df.apply(lambda x: int(jpholiday.is_holiday(x.time) | (x.dayofweek==5) | (x.dayofweek==6)), axis=1)
+    tmp1 = pd.get_dummies(df.dayofweek)
+    tmp2 = pd.get_dummies(df.hourofday)
+    tmp3 = df[['isholiday']]
+    df_dummy = pd.concat([tmp1, tmp2, tmp3], axis=1)
+    return df_dummy.values
