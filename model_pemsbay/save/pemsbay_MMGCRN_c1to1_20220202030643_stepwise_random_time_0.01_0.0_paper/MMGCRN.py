@@ -26,6 +26,10 @@ class AGCN(nn.Module):
         for support in support_set:
             x_g.append(torch.einsum("nm,bmc->bnc", support, x))
         x_g = torch.cat(x_g, dim=-1) # B, N, cheb_k * dim_in
+        # supports = torch.stack(support_set)
+        # x_g = torch.einsum("knm,bmc->bknc", supports, x)  # B, cheb_k, N, dim_in
+        # x_g = x_g.permute(0, 2, 1, 3)  # B, N, cheb_k, dim_in
+        # x_g = x_g.reshape(batch_num, node_num, -1) # B, N, cheb_k * dim_in
         x_gconv = torch.einsum('bni,io->bno', x_g, self.weights) + self.bias  # b, N, dim_out
         return x_gconv
     
@@ -117,7 +121,7 @@ class ADCRNN_STEP(nn.Module):
 
 class MMGCRN(nn.Module):
     def __init__(self, num_nodes, input_dim, output_dim, horizon, rnn_units, num_layers=1, embed_dim=8, cheb_k=3,
-                 ycov_dim=1, mem_num=10, mem_dim=32, memory_type='local', meta_type='yes', decoder_type='stepwise'):
+                 ycov_dim=1, mem_num=10, mem_dim=32, memory_type='local', meta_type='yes', decoder_type='stepwise', go_type='go'):
         super(MMGCRN, self).__init__()
         self.num_node = num_nodes
         self.input_dim = input_dim
@@ -148,6 +152,7 @@ class MMGCRN(nn.Module):
         
         # deocoder
         self.decoder_type = decoder_type
+        self.go_type = go_type
         if self.decoder_type == 'sequence':
             self.decoder = ADCRNN(num_nodes, self.ycov_dim, self.decoder_dim, cheb_k, embed_dim, num_layers)     # mob
         elif self.decoder_type == 'stepwise':
@@ -196,7 +201,12 @@ class MMGCRN(nn.Module):
                 h_de, state_de = self.decoder(y_cov, ht_list, self.node_embeddings)
             output = self.proj(h_de)
         elif self.decoder_type == 'stepwise':
-            go = torch.zeros((x.shape[0], self.num_node, self.output_dim), device=x.device)
+            if self.go_type == 'random':
+                go = torch.zeros((x.shape[0], self.num_node, self.output_dim), device=x.device)
+            elif self.go_type == 'last':
+                go = x[:, -1, :, :self.output_dim] # using the last input value instead of random.
+            else:
+                assert False, 'You must specify a correct go type: random or last'
             out = []
             for t in range(self.horizon):
                 if self.meta_type == 'yes':
@@ -208,7 +218,7 @@ class MMGCRN(nn.Module):
                 out.append(go)
             output = torch.stack(out, dim=1)
         else:
-            assert False, 'You must specify a correct decoder type: sequence or stepwise'
+            assert False, 'You must specify a correct decoder type: sequence, step_go_ycov, step_ycov'
         
         return output, h_att, query, pos, neg
 
@@ -237,13 +247,14 @@ def main():
     parser.add_argument("--memory", type=str, default='local', help="which type of memory: local or any other")
     parser.add_argument("--meta", type=str, default='yes', help="whether to use meta-graph: yes or any other")
     parser.add_argument("--decoder", type=str, default='stepwise', help="which type of decoder: stepwise or sequence")
+    parser.add_argument('--go', type=str, default='random', help='which type of decoder go: random or last')
     opt = parser.parse_args()
     
     num_variable = 325
     
     device = torch.device("cuda:{}".format(opt.gpu)) if torch.cuda.is_available() else torch.device("cpu")
     model = MMGCRN(num_nodes=num_variable, input_dim=opt.channelin, output_dim=opt.channelout, horizon=opt.seq_len, rnn_units=opt.hiddenunits, 
-                        memory_type=opt.memory, meta_type=opt.meta, decoder_type=opt.decoder).to(device)
+                        memory_type=opt.memory, meta_type=opt.meta, decoder_type=opt.decoder, go_type=opt.go).to(device)
     print_params(model)
     summary(model, [(opt.his_len, num_variable, opt.channelin), (opt.seq_len, num_variable, opt.channelout)], device=device)
         

@@ -55,7 +55,7 @@ def print_params(model):
 def getModel(mode):
     model = MMGCRN(num_nodes=num_variable, input_dim=opt.channelin, output_dim=opt.channelout, horizon=opt.seq_len, 
                         rnn_units=opt.hiddenunits, num_layers=opt.num_layers, mem_num=opt.mem_num, mem_dim=opt.mem_dim, 
-                        memory_type=opt.memory, meta_type=opt.meta, decoder_type=opt.decoder).to(device)
+                        memory_type=opt.memory, meta_type=opt.meta, decoder_type=opt.decoder, go_type=opt.go).to(device)
     if mode == 'train':
         summary(model, [(opt.his_len, num_variable, opt.channelin), (opt.seq_len, num_variable, opt.channelout)], device=device)   
         print_params(model)
@@ -276,7 +276,8 @@ parser.add_argument('--mem_dim', type=int, default=32, help='dimension of memory
 parser.add_argument("--memory", type=str, default='local', help="which type of memory: local or any other")
 parser.add_argument("--meta", type=str, default='yes', help="whether to use meta-graph: yes or any other")
 parser.add_argument("--decoder", type=str, default='stepwise', help="which type of decoder: stepwise or stepwise")
-parser.add_argument('--ycov', type=str, default='time', help='which ycov to use: time or history')
+parser.add_argument('--ycov', type=str, default='history', help='which ycov to use: time or history')
+parser.add_argument('--go', type=str, default='random', help='which type of decoder go: random or last')
 parser.add_argument('--model', type=str, default='MMGCRN', help='which model to use')
 parser.add_argument('--gpu', type=int, default=3, help='which gpu to use')
 parser.add_argument('--lamb', type=float, default=0.01, help='lamb value for separate loss')
@@ -332,6 +333,7 @@ logger.info('mem_num', opt.mem_num)
 logger.info('mem_dim', opt.mem_dim)
 logger.info('meta_type', opt.meta)
 logger.info('decoder_type', opt.decoder)
+logger.info('go_type', opt.go)
 logger.info('ycov_type', opt.ycov)
 logger.info('separate loss lamb', opt.lamb)
 logger.info('compact loss lamb1', opt.lamb1)
@@ -365,7 +367,8 @@ def main():
     data = data.reshape(-1, num_variable, data.shape[-1])
     scaler.fit(data[:, :, 0])
     data[:, :, 0] = scaler.transform(data[:, :, 0])
-    if opt.ycov=='history': data[:, :, 1] = scaler.transform(data[:, :, 1])
+    if opt.ycov=='history': 
+        data[:, :, 1] = scaler.transform(data[:, :, 1])
         
     logger.info(opt.city, 'training started', time.ctime())
     trainXS, trainYS = getXSYS(data, 'train')
