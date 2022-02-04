@@ -19,6 +19,7 @@ import logging
 import Metrics
 from GraphWaveNet import *
 from Utils import *
+import filecmp
 
 def refineXSYS(XS, YS):
     XS, YS = XS[:, :, :, :opt.channelin], YS[:, :, :, :opt.channelout]
@@ -28,12 +29,12 @@ def refineXSYS(XS, YS):
 def print_params(model):
     # print trainable params
     param_count = 0
-    logger.info('Trainable parameter list:')
+    print('Trainable parameter list:')
     for name, param in model.named_parameters():
         if param.requires_grad:
             print(name, param.shape, param.numel())
             param_count += param.numel()
-    logger.info(f' \n In total: {param_count} trainable parameters. \n')
+    print(f'\n In total: {param_count} trainable parameters. \n')
     return
 
 def getModel(mode):
@@ -70,86 +71,24 @@ def predictModel(model, data_iter):
             YS_pred.append(YS_pred_batch)
         YS_pred = np.vstack(YS_pred)
     return YS_pred
-
-def trainModel(name, mode, XS, YS):
-    logger.info('Model Training Started ...', time.ctime())
-    logger.info('TIMESTEP_IN, TIMESTEP_OUT', opt.his_len, opt.seq_len)
-    model = getModel(mode)
-    XS_torch, YS_torch = torch.Tensor(XS).to(device), torch.Tensor(YS).to(device)
-    trainval_data = torch.utils.data.TensorDataset(XS_torch, YS_torch)
-    trainval_size = len(trainval_data)
-    train_size = int(trainval_size * (1 - opt.val_ratio))
-    logger.info('XS_torch.shape:  ', XS_torch.shape)
-    logger.info('YS_torch.shape:  ', YS_torch.shape)
-    train_data = torch.utils.data.Subset(trainval_data, list(range(0, train_size)))
-    val_data = torch.utils.data.Subset(trainval_data, list(range(train_size, trainval_size)))
-    train_iter = torch.utils.data.DataLoader(train_data, opt.batch_size, shuffle=True)
-    val_iter = torch.utils.data.DataLoader(val_data, opt.batch_size, shuffle=True)
-    if opt.loss == 'MSE': criterion = nn.MSELoss()
-    if opt.loss == 'MAE': criterion = nn.L1Loss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=opt.lr)
-    min_val_loss = np.inf
-    wait = 0   
-    for epoch in range(opt.epoch):
-        starttime = datetime.now()     
-        loss_sum, n = 0.0, 0
-        model.train()
-        for x, y in train_iter:
-            optimizer.zero_grad()
-            y_pred = model(x)
-            loss = criterion(y_pred, y)
-            loss.backward()
-            optimizer.step()
-            loss_sum += loss.item() * y.shape[0]
-            n += y.shape[0]
-        train_loss = loss_sum / n
-        val_loss = evaluateModel(model, criterion, val_iter)
-        if val_loss < min_val_loss:
-            wait = 0
-            min_val_loss = val_loss
-            torch.save(model.state_dict(), modelpt_path)
-        else:
-            wait += 1
-            if wait == opt.patience:
-                logger.info('Early stopping at epoch: %d' % epoch)
-                break
-        endtime = datetime.now()
-        epoch_time = (endtime - starttime).seconds
-        logger.info("epoch", epoch, "time used:", epoch_time," seconds ", "train loss:", train_loss, "validation loss:", val_loss)
-        with open(epochlog_path, 'a') as f:
-            f.write("%s, %d, %s, %d, %s, %s, %.10f, %s, %.10f\n" % ("epoch", epoch, "time used", epoch_time, "seconds", "train loss", train_loss, "validation loss:", val_loss))
-            
-    torch_score = evaluateModel(model, criterion, train_iter)
-    YS_pred = predictModel(model, torch.utils.data.DataLoader(trainval_data, opt.batch_size, shuffle=False))
-    logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
-    YS, YS_pred = np.squeeze(YS), np.squeeze(YS_pred) 
-    YS, YS_pred = YS.reshape(-1, YS.shape[-1]), YS_pred.reshape(-1, YS_pred.shape[-1])
-    YS, YS_pred = scaler.inverse_transform(YS), scaler.inverse_transform(YS_pred)
-    YS, YS_pred = YS.reshape(-1, opt.seq_len, YS.shape[-1]), YS_pred.reshape(-1, opt.seq_len, YS_pred.shape[-1])
-    logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
-    MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS, YS_pred)
-    logger.info('*' * 40)
-    logger.info("%s, %s, Torch MSE, %.10e, %.10f" % (name, mode, torch_score, torch_score))
-    logger.info("%s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f" % (name, mode, MSE, RMSE, MAE, MAPE))
-    logger.info('Model Training Ended ...', time.ctime())
-        
+       
 def testModel(name, mode, XS, YS, Mask=None):
     def testScore(YS, YS_pred, message):
         MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS, YS_pred)
-        logger.info(message)
-        logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
-        logger.info("%s, %s, Torch MSE, %.10e, %.10f" % (name, mode, torch_score, torch_score))
-        logger.info("all pred steps, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f" % (name, mode, MSE, RMSE, MAE, MAPE))
+        print(message)
+        print('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
+        print("%s, %s, Torch MSE, %.10e, %.10f" % (name, mode, torch_score, torch_score))
+        print("all pred steps, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f" % (name, mode, MSE, RMSE, MAE, MAPE))
         with open(score_path, 'a') as f:
             f.write("all pred steps, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f\n" % (name, mode, MSE, RMSE, MAE, MAPE))
             for i in range(opt.seq_len):
                 MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS[..., i], YS_pred[..., i])
-                logger.info("%d step, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f" % (i+1, name, mode, MSE, RMSE, MAE, MAPE))
+                print("%d step, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f" % (i+1, name, mode, MSE, RMSE, MAE, MAPE))
                 f.write("%d step, %s, %s, MSE, RMSE, MAE, MAPE, %.10f, %.10f, %.10f, %.10f\n" % (i+1, name, mode, MSE, RMSE, MAE, MAPE))
         return None
     
-    logger.info('Model Testing Started ...', time.ctime())
-    logger.info('TIMESTEP_IN, TIMESTEP_OUT', opt.his_len, opt.seq_len)
+    print('Model Testing Started ...', time.ctime())
+    print('TIMESTEP_IN, TIMESTEP_OUT', opt.his_len, opt.seq_len)
     XS_torch, YS_torch = torch.Tensor(XS).to(device), torch.Tensor(YS).to(device)
     test_data = torch.utils.data.TensorDataset(XS_torch, YS_torch)
     test_iter = torch.utils.data.DataLoader(test_data, opt.batch_size, shuffle=False)
@@ -159,7 +98,7 @@ def testModel(name, mode, XS, YS, Mask=None):
     if opt.loss == 'MAE': criterion = nn.L1Loss()
     torch_score = evaluateModel(model, criterion, test_iter)
     YS_pred = predictModel(model, test_iter)
-    logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
+    print('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
     YS, YS_pred = np.squeeze(YS), np.squeeze(YS_pred) 
     YS, YS_pred = YS.reshape(-1, YS.shape[-1]), YS_pred.reshape(-1, YS_pred.shape[-1])
     YS, YS_pred = scaler.inverse_transform(YS), scaler.inverse_transform(YS_pred)
@@ -170,9 +109,15 @@ def testModel(name, mode, XS, YS, Mask=None):
     # np.save(path + f'/{name}_Mask_t1.npy', Mask)
     testScore(YS, YS_pred, '********* Evaluation on the whole testing dataset *********')
     testScore(YS[Mask], YS_pred[Mask], '********* Evaluation on the selected testing dataset when incident happen at t+1 *********')
-    logger.info('Model Testing Ended ...', time.ctime())
+    print('Model Testing Ended ...', time.ctime())
+    print('Two Score Files are Same', filecmp.cmp(old_score_path, score_path))
+    if filecmp.cmp(old_score_path, score_path):
+        print('Because the files are same, I return the reproducible model to the main().')
+        return model
+    else:
+        print('Because the files are not same, please kindly check the _scores_retest.txt file.')
+        return None
     
-#########################################################################################    
 parser = argparse.ArgumentParser()
 parser.add_argument("--loss", type=str, default='MAE', help="MAE, MSE, SELF")
 parser.add_argument("--epoch", type=int, default=200, help="number of epochs of training")
@@ -188,8 +133,6 @@ parser.add_argument('--month', type=str, default='202112', help='which experimen
 parser.add_argument('--city', type=str, default='tokyo', help='which experiment setting (city) to run')
 parser.add_argument('--channelin', type=int, default=1, help='number of input channel')
 parser.add_argument('--channelout', type=int, default=1, help='number of output channel')
-parser.add_argument('--incident', type=bool, default=False, help='whether to use incident flag')
-parser.add_argument('--accident', type=bool, default=False, help='whether to use accident flag')
 parser.add_argument('--time', type=bool, default=False, help='whether to use float time embedding')
 parser.add_argument('--history', type=bool, default=False, help='whether to use historical data')
 opt = parser.parse_args()
@@ -204,58 +147,32 @@ road_path = config['common']['road_path']
 adj_path = config['common']['adjdis_path'] # adj_path = config['common']['adj01_path']
 num_variable = len(np.loadtxt(subroad_path).astype(int))
 N_link = config.getint('common', 'N_link')
+
+# all we need to do is to specify this path.
+path = f'./save/tokyo202112_GraphWaveNet_c2to1_20220204014332_time'
+
+keywords = path.split('_')
+model_name = keywords[1]
+timestring = keywords[3]
+xcov_name = keywords[4] if len(keywords) > 4 else ''
+old_score_path = f'{path}/{model_name}_{timestring}_scores.txt'
+score_path = f'{path}/{model_name}_{timestring}_scores_retest.txt'
+if os.path.exists(score_path): os.remove(score_path)
+modelpt_path = f'{path}/{model_name}_{timestring}.pt'
+if xcov_name == 'time': opt.time=True
+if xcov_name == 'history': opt.history=True 
 feature_list = ['speed_typea']
-if opt.incident: feature_list.append('accident_flag')
-if opt.accident: feature_list.append('real_accident_flag')
 if opt.time: feature_list.append('weekdaytime')
 if opt.history: feature_list.append('speed_typea_y')
 opt.channelin = len(feature_list)
-# feature_list = ['speed_typea', 'accident_flag', 'real_accident_flag', 'weekdaytime', 'speed_typea_y']
 
-_, filename = os.path.split(os.path.abspath(sys.argv[0]))
-filename = os.path.splitext(filename)[0]
-model_name = filename.split('_')[-1]
-timestring = time.strftime('%Y%m%d%H%M%S', time.localtime())
-xcov_name = ''
-if opt.time: xcov_name='_time'
-if opt.history: xcov_name='_history'
-path = f'./save/{opt.city}{opt.month}_{model_name}_c{opt.channelin}to{opt.channelout}_{timestring}{xcov_name}' 
-logging_path = f'{path}/{model_name}_{timestring}_logging.txt'
-score_path = f'{path}/{model_name}_{timestring}_scores.txt'
-epochlog_path = f'{path}/{model_name}_{timestring}_epochlog.txt'
-modelpt_path = f'{path}/{model_name}_{timestring}.pt'
-if not os.path.exists(path): os.makedirs(path)
-shutil.copy2(sys.argv[0], path)
-shutil.copy2(f'{model_name}.py', path)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(level = logging.INFO)
-class MyFormatter(logging.Formatter):
-    def format(self, record):
-        spliter = ' '
-        record.msg = str(record.msg) + spliter + spliter.join(map(str, record.args))
-        record.args = tuple() # set empty to args
-        return super().format(record)
-formatter = MyFormatter()
-handler = logging.FileHandler(logging_path, mode='a')
-handler.setLevel(logging.INFO)
-handler.setFormatter(formatter)
-console = logging.StreamHandler()
-console.setLevel(logging.INFO)
-console.setFormatter(formatter)
-logger.addHandler(handler)
-logger.addHandler(console)
-
-logger.info('experiment_city', opt.city)
-logger.info('experiment_month', opt.month)
-logger.info('model_name', model_name)
-logger.info('channnel_in', opt.channelin)
-logger.info('channnel_out', opt.channelout)
-logger.info('feature_incident', opt.incident)
-logger.info('feature_accident', opt.accident)
-logger.info('feature_time', opt.time)
-logger.info('feature_history', opt.history)
-#####################################################################################################
+print('experiment_city', opt.city)
+print('experiment_month', opt.month)
+print('model_name', model_name)
+print('channnel_in', opt.channelin)
+print('channnel_out', opt.channelout)
+print('feature_time', opt.time)
+print('feature_history', opt.history)
 
 device = torch.device("cuda:{}".format(opt.gpu)) if torch.cuda.is_available() else torch.device("cpu")
 np.random.seed(opt.seed)
@@ -279,26 +196,24 @@ def main():
     scaler.fit(speed_data)
     
     for data in train_data:
-        logger.info('train_data', data.shape)
+        print('train_data', data.shape)
         data[:,:,0] = scaler.transform(data[:,:,0])
     for data in test_data:
-        logger.info('test_data', data.shape)
+        print('test_data', data.shape)
         data[:,:,0] = scaler.transform(data[:,:,0])
-    
-    logger.info(opt.city, opt.month, 'training started', time.ctime())
-    trainXS, trainYS = getXSYS(train_data, opt.his_len, opt.seq_len)
-    trainXS, trainYS = refineXSYS(trainXS, trainYS)
-    logger.info('TRAIN XS.shape YS,shape', trainXS.shape, trainYS.shape)
-    trainModel(model_name, 'train', trainXS, trainYS)
-        
-    logger.info(opt.city, opt.month, 'testing started', time.ctime())
+           
+    print(opt.city, opt.month, 'testing started', time.ctime())
     testXS, testYS = getXSYS(test_data, opt.his_len, opt.seq_len)
     testXS, testYS = refineXSYS(testXS, testYS)
     _, testYSFlag = getXSYS(test_flag, opt.his_len, opt.seq_len)
     testYMask = testYSFlag[:, 0, :, 0] > 0 # (B, N) incident happen at the first prediction timeslot, t+1.
-    logger.info('TEST XS.shape, YS.shape, YMask.shape', testXS.shape, testYS.shape, testYMask.shape)
-    testModel(model_name, 'test', testXS, testYS, testYMask)
-
+    print('TEST XS.shape, YS.shape, YMask.shape', testXS.shape, testYS.shape, testYMask.shape)
+    model = testModel(model_name, 'test', testXS, testYS, testYMask)
+    
+    #########################
+    # I return the model here
+    #########################
+    
     
 if __name__ == '__main__':
     main()
