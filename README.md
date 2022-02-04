@@ -11,7 +11,7 @@ Working projects for forecasting traffic flow at accidents and incidents
   <br>cd ./model_ours
   <br>python retest_MMGCRN.py
   
-  <br>Other ablation models (GCRN, MetaGCRN, MemGCRN) can also be reproduced in a similar way.
+  Other ablation models (GCRN, MetaGCRN, MemGCRN) can also be reproduced in a similar way.
   <br>python retest_GCRN.py
   <br>python retest_MetaGCRN.py
   <br>python retest_MemGCRN.py
