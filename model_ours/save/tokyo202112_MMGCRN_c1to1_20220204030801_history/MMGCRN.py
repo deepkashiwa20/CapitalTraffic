@@ -177,7 +177,10 @@ class MMGCRN(nn.Module):
         neg = self.memory['Memory'][ind[:, :, 1]] # B, N, d
         return W_E, proto_t, query, pos, neg
             
-    def forward(self, x, y_cov):       
+    def forward(self, x, y_cov):
+        if x.shape[-1] > 1 and self.input_dim == 1:
+            x, ex_t = x[:, :, :, :1], x[:, -1, :, 1] # x and accident at t
+        
         init_state = self.encoder.init_hidden(x.shape[0])
         h_en, state_en = self.encoder(x, init_state, self.node_embeddings)      # B, T, N, hidden      
         h_t = h_en[:, -1, :, :]                               # B, N, hidden (last state)

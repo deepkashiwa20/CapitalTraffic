@@ -115,10 +115,10 @@ class ADCRNN_STEP(nn.Module):
         return current_inputs, output_hidden
 
 
-class MMGCRN(nn.Module):
+class MemGCRN(nn.Module):
     def __init__(self, num_nodes, input_dim, output_dim, horizon, rnn_units, num_layers=1, embed_dim=8, cheb_k=3,
-                 ycov_dim=1, mem_num=10, mem_dim=32, memory_type='local', meta_type='yes', decoder_type='stepwise', go_type='go'):
-        super(MMGCRN, self).__init__()
+                 ycov_dim=1, mem_num=10, mem_dim=32, decoder_type='stepwise', go_type='go'):
+        super(MemGCRN, self).__init__()
         self.num_node = num_nodes
         self.input_dim = input_dim
         self.hidden_dim = rnn_units
@@ -127,7 +127,6 @@ class MMGCRN(nn.Module):
         self.num_layers = num_layers
         self.embed_dim = embed_dim
         self.cheb_k = cheb_k
-        self.memory_type = memory_type
         self.node_embeddings = nn.Parameter(torch.randn(self.num_node, self.embed_dim), requires_grad=True)
         
         self.ycov_dim = ycov_dim # float type t_cov or history_cov
@@ -137,11 +136,7 @@ class MMGCRN(nn.Module):
         self.mem_dim = mem_dim
         self.memory = self.construct_memory()
         
-        if self.memory_type in ['local']:
-            self.decoder_dim = self.hidden_dim + self.mem_dim # add historical average
-        else:
-            self.decoder_dim = self.hidden_dim
-        self.meta_type = meta_type
+        self.decoder_dim = self.hidden_dim + self.mem_dim # add historical average
         
         # encoder
         self.encoder = ADCRNN(num_nodes, self.input_dim, rnn_units, cheb_k, embed_dim, num_layers)     # mob
@@ -161,7 +156,6 @@ class MMGCRN(nn.Module):
         memory_dict = nn.ParameterDict()
         memory_dict['Memory'] = nn.Parameter(torch.randn(self.mem_num, self.mem_dim), requires_grad=True)     # (M, d)
         memory_dict['Wq'] = nn.Parameter(torch.randn(self.hidden_dim, self.mem_dim), requires_grad=True)    # project to query
-        memory_dict['FC_E'] = nn.Parameter(torch.randn(self.mem_dim, self.embed_dim), requires_grad=True)
         for param in memory_dict.values():
             nn.init.xavier_normal_(param)
         return memory_dict
@@ -171,31 +165,23 @@ class MMGCRN(nn.Module):
         query = torch.matmul(h_t, self.memory['Wq'])     # (B, N, d)
         att_score = torch.softmax(torch.matmul(query, self.memory['Memory'].t()), dim=-1)         # alpha: (B, N, M)
         proto_t = torch.matmul(att_score, self.memory['Memory'])     # (B, N, d)
-        W_E = torch.matmul(proto_t, self.memory['FC_E']) # (B, N, e)
         _, ind = torch.topk(att_score, k=2, dim=-1)
         pos = self.memory['Memory'][ind[:, :, 0]] # B, N, d
         neg = self.memory['Memory'][ind[:, :, 1]] # B, N, d
-        return W_E, proto_t, query, pos, neg
+        return proto_t, query, pos, neg
             
     def forward(self, x, y_cov):       
         init_state = self.encoder.init_hidden(x.shape[0])
         h_en, state_en = self.encoder(x, init_state, self.node_embeddings)      # B, T, N, hidden      
         h_t = h_en[:, -1, :, :]                               # B, N, hidden (last state)
         
-        if self.memory_type == 'local':
-            _node_embeddings, h_att, query, pos, neg = self.query_memory(h_t)
-            h_t = torch.cat([h_t, h_att], dim=-1)            
-        else:
-            _node_embeddings = None
+        h_att, query, pos, neg = self.query_memory(h_t)
+        h_t = torch.cat([h_t, h_att], dim=-1)            
         
         ht_list = [h_t]*self.num_layers
         
         if self.decoder_type == 'sequence':
-            if self.meta_type == 'yes':
-                assert _node_embeddings is not None, 'meta graph (node embedding) is None ...'
-                h_de, state_de = self.decoder(y_cov, ht_list, _node_embeddings)
-            else:
-                h_de, state_de = self.decoder(y_cov, ht_list, self.node_embeddings)
+            h_de, state_de = self.decoder(y_cov, ht_list, self.node_embeddings)
             output = self.proj(h_de)
         elif self.decoder_type == 'stepwise':
             if self.go_type == 'random':
@@ -206,11 +192,7 @@ class MMGCRN(nn.Module):
                 assert False, 'You must specify a correct go type: random or last'
             out = []
             for t in range(self.horizon):
-                if self.meta_type == 'yes':
-                    assert _node_embeddings is not None, 'meta graph (node embedding) is None ...'
-                    h_de, ht_list = self.decoder(torch.cat([go, y_cov[:, t, ...]], dim=-1), ht_list, _node_embeddings)
-                else:
-                    h_de, ht_list = self.decoder(torch.cat([go, y_cov[:, t, ...]], dim=-1), ht_list, self.node_embeddings)
+                h_de, ht_list = self.decoder(torch.cat([go, y_cov[:, t, ...]], dim=-1), ht_list, self.node_embeddings)
                 go = self.proj(h_de)
                 out.append(go)
             output = torch.stack(out, dim=1)
@@ -241,8 +223,6 @@ def main():
     parser.add_argument('--channelin', type=int, default=1, help='number of input channel')
     parser.add_argument('--channelout', type=int, default=1, help='number of output channel')
     parser.add_argument('--hiddenunits', type=int, default=32, help='number of hidden units')
-    parser.add_argument("--memory", type=str, default='local', help="which type of memory: local or any other")
-    parser.add_argument("--meta", type=str, default='yes', help="whether to use meta-graph: yes or any other")
     parser.add_argument("--decoder", type=str, default='stepwise', help="which type of decoder: stepwise or sequence")
     parser.add_argument('--go', type=str, default='last', help='which type of decoder go: random or last')
     opt = parser.parse_args()
@@ -250,8 +230,8 @@ def main():
     num_variable = 1843
     
     device = torch.device("cuda:{}".format(opt.gpu)) if torch.cuda.is_available() else torch.device("cpu")
-    model = MMGCRN(num_nodes=num_variable, input_dim=opt.channelin, output_dim=opt.channelout, horizon=opt.seq_len, rnn_units=opt.hiddenunits, 
-                        memory_type=opt.memory, meta_type=opt.meta, decoder_type=opt.decoder, go_type=opt.go).to(device)
+    model = MemGCRN(num_nodes=num_variable, input_dim=opt.channelin, output_dim=opt.channelout, horizon=opt.seq_len, rnn_units=opt.hiddenunits, 
+                         decoder_type=opt.decoder, go_type=opt.go).to(device)
     print_params(model)
     summary(model, [(opt.his_len, num_variable, opt.channelin), (opt.seq_len, num_variable, opt.channelout)], device=device)
         

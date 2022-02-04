@@ -1,0 +1,116 @@
+experiment_city tokyo
+experiment_month 202112
+model_name GCRN
+decoder_type stepwise
+go_type last
+ycov_type history
+batch_size 64
+rnn_units 32
+num_layers 1
+channnel_in 1
+channnel_out 1
+feature_time False
+feature_history True
+train_data (4464, 1843, 2)
+train_data (4320, 1843, 2)
+test_data (4464, 1843, 2)
+tokyo 202112 training started Fri Feb  4 12:22:25 2022
+TRAIN XS.shape YS.shape, XCov.shape, YCov.shape (8762, 6, 1843, 1) (8762, 6, 1843, 1) (8762, 6, 1843, 1) (8762, 6, 1843, 1)
+Model Training Started ... Fri Feb  4 12:22:29 2022
+TIMESTEP_IN, TIMESTEP_OUT 6 6
+Trainable parameter list: 
+
+ In total: 34265 trainable parameters. 
+ 
+XS_torch.shape:   torch.Size([8762, 6, 1843, 1])
+YS_torch.shape:   torch.Size([8762, 6, 1843, 1])
+YCov_torch.shape:   torch.Size([8762, 6, 1843, 1])
+epoch 0 time used: 31  seconds  train loss: 0.44382655230074275 validation loss: 0.34940441538350653
+epoch 1 time used: 31  seconds  train loss: 0.3158398688887193 validation loss: 0.28641786366116234
+epoch 2 time used: 32  seconds  train loss: 0.28238646406240975 validation loss: 0.27007096820854803
+epoch 3 time used: 31  seconds  train loss: 0.2680054490578227 validation loss: 0.2626359657656923
+epoch 4 time used: 32  seconds  train loss: 0.25856489765827306 validation loss: 0.25976700054516483
+epoch 5 time used: 32  seconds  train loss: 0.25581795154750264 validation loss: 0.25799218580528027
+epoch 6 time used: 32  seconds  train loss: 0.25451813619615027 validation loss: 0.2569099290220773
+epoch 7 time used: 32  seconds  train loss: 0.25349717247642134 validation loss: 0.2560552770840637
+epoch 8 time used: 32  seconds  train loss: 0.2527499273861585 validation loss: 0.2549132174386765
+epoch 9 time used: 31  seconds  train loss: 0.2523728310630993 validation loss: 0.254329919862671
+epoch 10 time used: 32  seconds  train loss: 0.25205561947267435 validation loss: 0.25388212456435494
+epoch 11 time used: 32  seconds  train loss: 0.25195586438493595 validation loss: 0.2535736263546428
+epoch 12 time used: 32  seconds  train loss: 0.2514663052543478 validation loss: 0.2534456290797739
+epoch 13 time used: 32  seconds  train loss: 0.25136319146392516 validation loss: 0.25323821156060844
+epoch 14 time used: 32  seconds  train loss: 0.25120381927938334 validation loss: 0.25311820639534555
+epoch 15 time used: 32  seconds  train loss: 0.25109325744140243 validation loss: 0.25294424642416397
+epoch 16 time used: 32  seconds  train loss: 0.2509345127814728 validation loss: 0.2528478750922483
+epoch 17 time used: 32  seconds  train loss: 0.2508844293097241 validation loss: 0.25274757548506976
+epoch 18 time used: 32  seconds  train loss: 0.25085436303654396 validation loss: 0.25266977290430337
+epoch 19 time used: 32  seconds  train loss: 0.25079657393419075 validation loss: 0.252577229463744
+epoch 20 time used: 32  seconds  train loss: 0.2506918875644276 validation loss: 0.2525410522532104
+epoch 21 time used: 32  seconds  train loss: 0.2506275760213129 validation loss: 0.2524605705443173
+epoch 22 time used: 32  seconds  train loss: 0.25056084022186714 validation loss: 0.2524172756795413
+epoch 23 time used: 32  seconds  train loss: 0.2504915466316395 validation loss: 0.2523733346239718
+epoch 24 time used: 31  seconds  train loss: 0.25046943303630187 validation loss: 0.25234891207644733
+epoch 25 time used: 32  seconds  train loss: 0.2504250820033936 validation loss: 0.2523334801727536
+epoch 26 time used: 32  seconds  train loss: 0.250364868424741 validation loss: 0.25228649379183093
+epoch 27 time used: 32  seconds  train loss: 0.2503621053671187 validation loss: 0.25225256305206645
+epoch 28 time used: 32  seconds  train loss: 0.2502779632289739 validation loss: 0.252246364713096
+epoch 29 time used: 32  seconds  train loss: 0.2502606557241369 validation loss: 0.2522232216795195
+epoch 30 time used: 32  seconds  train loss: 0.25019090613252476 validation loss: 0.25219114196866355
+epoch 31 time used: 32  seconds  train loss: 0.25016517578430725 validation loss: 0.2521900124184784
+epoch 32 time used: 31  seconds  train loss: 0.2501490065821446 validation loss: 0.25215976157861997
+epoch 33 time used: 31  seconds  train loss: 0.2501230700055752 validation loss: 0.2521518383843341
+epoch 34 time used: 32  seconds  train loss: 0.2500635139443453 validation loss: 0.25212285460565037
+epoch 35 time used: 32  seconds  train loss: 0.25003096906902256 validation loss: 0.25215794920703694
+epoch 36 time used: 32  seconds  train loss: 0.24998987336270143 validation loss: 0.2520985046324258
+epoch 37 time used: 32  seconds  train loss: 0.24996922261419952 validation loss: 0.25213666512562444
+epoch 38 time used: 32  seconds  train loss: 0.24994691828808055 validation loss: 0.2520860368764221
+epoch 39 time used: 32  seconds  train loss: 0.24991158420383577 validation loss: 0.2521269194193487
+epoch 40 time used: 32  seconds  train loss: 0.24988757584795634 validation loss: 0.2520765349683779
+epoch 41 time used: 32  seconds  train loss: 0.2498880524787524 validation loss: 0.2521283600372247
+epoch 42 time used: 32  seconds  train loss: 0.24985466897034098 validation loss: 0.2520753446641658
+epoch 43 time used: 32  seconds  train loss: 0.24983388239019194 validation loss: 0.2521227002075849
+epoch 44 time used: 32  seconds  train loss: 0.24983691531961286 validation loss: 0.2520463372857426
+epoch 45 time used: 32  seconds  train loss: 0.24982720145649823 validation loss: 0.2520930901040556
+epoch 46 time used: 32  seconds  train loss: 0.24984804299020674 validation loss: 0.2521388836847708
+epoch 47 time used: 32  seconds  train loss: 0.24977009820667798 validation loss: 0.2521037462229927
+epoch 48 time used: 32  seconds  train loss: 0.24976102404580997 validation loss: 0.2521270366291214
+epoch 49 time used: 32  seconds  train loss: 0.24969874756681992 validation loss: 0.2521477699932689
+epoch 50 time used: 32  seconds  train loss: 0.249713573662082 validation loss: 0.25206739873387723
+epoch 51 time used: 32  seconds  train loss: 0.2496951342926162 validation loss: 0.25216965600406127
+epoch 52 time used: 32  seconds  train loss: 0.2497114373126942 validation loss: 0.2520736194551943
+epoch 53 time used: 36  seconds  train loss: 0.2496968078306686 validation loss: 0.25215336780388137
+Early stopping at epoch: 54 
+trainval loss 0.2495781822621999
+YS.shape, YS_pred.shape, (8762, 6, 1843, 1) (8762, 6, 1843, 1)
+YS.shape, YS_pred.shape, (8762, 6, 1843) (8762, 6, 1843)
+**************************************** 
+GCRN, train, Torch MSE, 0.249686 
+GCRN, train, MSE, RMSE, MAE, MAPE, 89.474447, 9.459093, 5.930192, 12.582985 
+Model Training Ended ... Fri Feb  4 12:52:31 2022
+tokyo 202112 testing started Fri Feb  4 12:52:31 2022
+TEST XS.shape, YS.shape, XCov.shape, YCov.shape, YMask.shape (4453, 6, 1843, 1) (4453, 6, 1843, 1) (4453, 6, 1843, 1) (4453, 6, 1843, 1) (4453, 1843)
+Model Testing Started ... Fri Feb  4 12:52:34 2022
+TIMESTEP_IN, TIMESTEP_OUT 6 6
+test loss 0.34085413967521705
+YS.shape, YS_pred.shape, (4453, 6, 1843, 1) (4453, 6, 1843, 1)
+********* Evaluation on the whole testing dataset ********* 
+YS.shape, YS_pred.shape, (4453, 1843, 6) (4453, 1843, 6)
+GCRN, test, Torch MSE, 0.340854 
+all pred steps, GCRN, test, MSE, RMSE, MAE, MAPE, 161.938147, 12.725492, 8.099085, 18.578747 
+1 step, GCRN, test, MSE, RMSE, MAE, MAPE, 162.122118, 12.732718, 8.111994, 18.558009 
+2 step, GCRN, test, MSE, RMSE, MAE, MAPE, 161.483388, 12.707611, 8.091321, 18.481708 
+3 step, GCRN, test, MSE, RMSE, MAE, MAPE, 161.892743, 12.723708, 8.095948, 18.603919 
+4 step, GCRN, test, MSE, RMSE, MAE, MAPE, 162.084243, 12.731231, 8.097625, 18.660786 
+5 step, GCRN, test, MSE, RMSE, MAE, MAPE, 162.153114, 12.733936, 8.100100, 18.621608 
+6 step, GCRN, test, MSE, RMSE, MAE, MAPE, 161.893277, 12.723729, 8.097525, 18.546451 
+********* Evaluation on the selected testing dataset when incident happen at t+1 ********* 
+YS.shape, YS_pred.shape, (81745, 6) (81745, 6)
+GCRN, test, Torch MSE, 0.340854 
+all pred steps, GCRN, test, MSE, RMSE, MAE, MAPE, 307.536042, 17.536706, 10.709388, 23.471795 
+1 step, GCRN, test, MSE, RMSE, MAE, MAPE, 952.790437, 30.867304, 21.965627, 47.070024 
+2 step, GCRN, test, MSE, RMSE, MAE, MAPE, 193.805813, 13.921416, 8.853840, 20.533339 
+3 step, GCRN, test, MSE, RMSE, MAE, MAPE, 143.948639, 11.997860, 7.651612, 15.153648 
+4 step, GCRN, test, MSE, RMSE, MAE, MAPE, 191.583999, 13.841387, 8.712532, 18.974621 
+5 step, GCRN, test, MSE, RMSE, MAE, MAPE, 209.012136, 14.457252, 9.157340, 21.718256 
+6 step, GCRN, test, MSE, RMSE, MAE, MAPE, 154.075227, 12.412704, 7.915379, 17.380880 
+Model Testing Ended ... Fri Feb  4 12:52:49 2022

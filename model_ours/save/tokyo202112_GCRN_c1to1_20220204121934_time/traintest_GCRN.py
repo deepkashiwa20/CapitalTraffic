@@ -17,7 +17,7 @@ import argparse
 from configparser import ConfigParser
 import logging
 import Metrics
-from MMGCRN import MMGCRN
+from GCRN import GCRN
 from Utils import *
 
 def refineXSYS(XS, YS):
@@ -38,9 +38,8 @@ def print_params(model):
     return
 
 def getModel(mode):
-    model = MMGCRN(num_nodes=num_variable, input_dim=opt.channelin, output_dim=opt.channelout, horizon=opt.seq_len, 
-                        rnn_units=opt.hiddenunits, num_layers=opt.num_layers, mem_num=opt.mem_num, mem_dim=opt.mem_dim, 
-                        memory_type=opt.memory, meta_type=opt.meta, decoder_type=opt.decoder, go_type=opt.go).to(device)
+    model = GCRN(num_nodes=num_variable, input_dim=opt.channelin, output_dim=opt.channelout, horizon=opt.seq_len, 
+                        rnn_units=opt.hiddenunits, num_layers=opt.num_layers, decoder_type=opt.decoder, go_type=opt.go).to(device)
     if mode == 'train':
         summary(model, [(opt.his_len, num_variable, opt.channelin), (opt.seq_len, num_variable, opt.channelout)], device=device)   
         print_params(model)
@@ -56,45 +55,27 @@ def evaluateModel(model, data_iter, ycov_flag):
         criterion = nn.MSELoss()
     if opt.loss == 'MAE': 
         criterion = nn.L1Loss()
-        separate_loss = nn.TripletMarginLoss(margin=1.0)
-        compact_loss = nn.MSELoss()
         
     model.eval()
     loss_sum, n, YS_pred = 0.0, 0, []
-    loss_sum1, loss_sum2, loss_sum3 = 0.0, 0.0, 0.0
     with torch.no_grad():
         if ycov_flag:
             for x, y, y_cov in data_iter:
-                y_pred, h_att, query, pos, neg = model(x, y_cov)
-                loss1 = criterion(y_pred, y)
-                loss2 = separate_loss(query, pos.detach(), neg.detach())
-                loss3 = compact_loss(query, pos.detach())
-                loss = loss1 + opt.lamb * loss2 + opt.lamb1 * loss3
+                y_pred = model(x, y_cov)
+                loss = criterion(y_pred, y)
                 loss_sum += loss.item() * y.shape[0]
-                loss_sum1 += loss1.item() * y.shape[0]
-                loss_sum2 += loss2.item() * y.shape[0]
-                loss_sum3 += loss3.item() * y.shape[0]
                 n += y.shape[0]
                 YS_pred.append(y_pred.cpu().numpy())     
         else:
             for x, y in data_iter:
-                y_pred, h_att, query, pos, neg = model(x)
-                loss1 = criterion(y_pred, y)
-                loss2 = separate_loss(query, pos.detach(), neg.detach())
-                loss3 = compact_loss(query, pos.detach())
-                loss = loss1 + opt.lamb * loss2 + opt.lamb1 * loss3
+                y_pred = model(x)
+                loss = criterion(y_pred, y)
                 loss_sum += loss.item() * y.shape[0]
-                loss_sum1 += loss1.item() * y.shape[0]
-                loss_sum2 += loss2.item() * y.shape[0]
-                loss_sum3 += loss3.item() * y.shape[0]
                 n += y.shape[0]
                 YS_pred.append(y_pred.cpu().numpy())
     loss = loss_sum / n
-    loss1 = loss_sum1 / n
-    loss2 = loss_sum2 / n 
-    loss3 = loss_sum3 / n 
     YS_pred = np.vstack(YS_pred)
-    return loss, loss1, loss2, loss3, YS_pred
+    return loss, YS_pred
 
 def trainModel(name, mode, XS, YS, YCov):
     logger.info('Model Training Started ...', time.ctime())
@@ -122,51 +103,33 @@ def trainModel(name, mode, XS, YS, YCov):
         criterion = nn.MSELoss()
     if opt.loss == 'MAE': 
         criterion = nn.L1Loss()
-        separate_loss = nn.TripletMarginLoss(margin=1.0)
-        compact_loss = nn.MSELoss()
         
     min_val_loss = np.inf
     wait = 0   
     for epoch in range(opt.epoch):
         starttime = datetime.now()     
         loss_sum, n = 0.0, 0
-        loss_sum1, loss_sum2, loss_sum3 = 0.0, 0.0, 0.0
         model.train()
         if YCov is not None:
             for x, y, ycov in train_iter:
                 optimizer.zero_grad()
-                y_pred, h_att, query, pos, neg = model(x, ycov)
-                loss1 = criterion(y_pred, y)
-                loss2 = separate_loss(query, pos.detach(), neg.detach())
-                loss3 = compact_loss(query, pos.detach())
-                loss = loss1 + opt.lamb * loss2 + opt.lamb1 * loss3
+                y_pred = model(x, ycov)
+                loss = criterion(y_pred, y)
                 loss.backward()
                 optimizer.step()
                 loss_sum += loss.item() * y.shape[0]
-                loss_sum1 += loss1.item() * y.shape[0]
-                loss_sum2 += loss2.item() * y.shape[0]
-                loss_sum3 += loss3.item() * y.shape[0]
                 n += y.shape[0]
         else:
             for x, y in train_iter:
                 optimizer.zero_grad()
-                y_pred, h_att, query, pos, neg = model(x)
-                loss1 = criterion(y_pred, y)
-                loss2 = separate_loss(query, pos.detach(), neg.detach())
-                loss3 = compact_loss(query, pos.detach())
-                loss = loss1 + opt.lamb * loss2 + opt.lamb1 * loss3
+                y_pred = model(x)
+                loss = criterion(y_pred, y)
                 loss.backward()
                 optimizer.step()
                 loss_sum += loss.item() * y.shape[0]
-                loss_sum1 += loss1.item() * y.shape[0]
-                loss_sum2 += loss2.item() * y.shape[0]
-                loss_sum3 += loss3.item() * y.shape[0]
                 n += y.shape[0]
         train_loss = loss_sum / n
-        train_loss1 = loss_sum1 / n
-        train_loss2 = loss_sum2 / n
-        train_loss3 = loss_sum3 / n
-        val_loss, val_loss1, val_loss2, val_loss3, _ = evaluateModel(model, val_iter, YCov is not None)
+        val_loss, _ = evaluateModel(model, val_iter, YCov is not None)
         if val_loss < min_val_loss:
             wait = 0
             min_val_loss = val_loss
@@ -178,13 +141,13 @@ def trainModel(name, mode, XS, YS, YCov):
                 break
         endtime = datetime.now()
         epoch_time = (endtime - starttime).seconds
-        logger.info("epoch", epoch, "time used:", epoch_time," seconds ", "train loss:", train_loss, train_loss1, train_loss2, train_loss3, "validation loss:", val_loss, val_loss1, val_loss2, val_loss3)
+        logger.info("epoch", epoch, "time used:", epoch_time," seconds ", "train loss:", train_loss, "validation loss:", val_loss)
         with open(epochlog_path, 'a') as f:
             f.write("%s, %d, %s, %d, %s, %s, %.6f, %s, %.6f\n" % ("epoch", epoch, "time used", epoch_time, "seconds", "train loss", train_loss, "validation loss:", val_loss))
             
     # torch_score = train_loss
-    loss, loss1, loss2, loss3, YS_pred = evaluateModel(model, trainval_iter, YCov is not None)
-    logger.info('trainval loss, loss1, loss2, loss3', loss, loss1, loss2, loss3)
+    loss, YS_pred = evaluateModel(model, trainval_iter, YCov is not None)
+    logger.info('trainval loss', loss)
     logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
     YS = YS[:YS_pred.shape[0], ...]
     YS, YS_pred = np.squeeze(YS), np.squeeze(YS_pred) 
@@ -194,7 +157,7 @@ def trainModel(name, mode, XS, YS, YCov):
     logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
     MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS, YS_pred)
     logger.info('*' * 40)
-    logger.info("%s, %s, Torch MSE, %.6f, %.6f, %.6f, %.6f" % (name, mode, train_loss, train_loss1, train_loss2, train_loss3))
+    logger.info("%s, %s, Torch MSE, %.6f" % (name, mode, train_loss))
     logger.info("%s, %s, MSE, RMSE, MAE, MAPE, %.6f, %.6f, %.6f, %.6f" % (name, mode, MSE, RMSE, MAE, MAPE))
     logger.info('Model Training Ended ...', time.ctime())
     
@@ -203,7 +166,7 @@ def testModel(name, mode, XS, YS, YCov, Mask=None):
         MSE, RMSE, MAE, MAPE = Metrics.evaluate(YS, YS_pred)
         logger.info(message)
         logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
-        logger.info("%s, %s, Torch MSE, %.6f, %.6f, %.6f, %.6f" % (name, mode, loss, loss1, loss2, loss3))
+        logger.info("%s, %s, Torch MSE, %.6f" % (name, mode, loss))
         logger.info("all pred steps, %s, %s, MSE, RMSE, MAE, MAPE, %.6f, %.6f, %.6f, %.6f" % (name, mode, MSE, RMSE, MAE, MAPE))
         with open(score_path, 'a') as f:
             f.write("all pred steps, %s, %s, MSE, RMSE, MAE, MAPE, %.6f, %.6f, %.6f, %.6f\n" % (name, mode, MSE, RMSE, MAE, MAPE))
@@ -227,8 +190,8 @@ def testModel(name, mode, XS, YS, YCov, Mask=None):
         test_data = torch.utils.data.TensorDataset(XS_torch, YS_torch)
     test_iter = torch.utils.data.DataLoader(test_data, opt.batch_size, shuffle=False) # drop_last=True
     
-    loss, loss1, loss2, loss3, YS_pred = evaluateModel(model, test_iter, YCov is not None)
-    logger.info('test loss, loss1, loss2, loss3', loss, loss1, loss2, loss3)
+    loss, YS_pred = evaluateModel(model, test_iter, YCov is not None)
+    logger.info('test loss', loss)
     logger.info('YS.shape, YS_pred.shape,', YS.shape, YS_pred.shape)
     YS = YS[:YS_pred.shape[0], ...]
     YS, YS_pred = np.squeeze(YS), np.squeeze(YS_pred) 
@@ -262,20 +225,14 @@ parser.add_argument('--time', type=bool, default=False, help='whether to use flo
 parser.add_argument('--history', type=bool, default=False, help='whether to use historical data')
 parser.add_argument('--num_layers', type=int, default=1, help='number of layers')
 parser.add_argument('--hiddenunits', type=int, default=32, help='number of hidden units')
-parser.add_argument('--mem_num', type=int, default=10, help='number of memory')
-parser.add_argument('--mem_dim', type=int, default=32, help='dimension of memory')
-parser.add_argument("--memory", type=str, default='local', help="which type of memory: local or nomemory")
-parser.add_argument("--meta", type=str, default='yes', help="whether to use meta-graph: yes or any other")
 parser.add_argument("--decoder", type=str, default='stepwise', help="which type of decoder: stepwise or stepwise")
 parser.add_argument('--ycov', type=str, default='history', help='which ycov to use: time or history')
 parser.add_argument('--go', type=str, default='random', help='which type of decoder go: random or last')
-parser.add_argument('--model', type=str, default='MMGCRN', help='which model to use')
+parser.add_argument('--model', type=str, default='GCRN', help='which model to use')
 parser.add_argument('--gpu', type=int, default=3, help='which gpu to use')
-parser.add_argument('--lamb', type=float, default=0.01, help='lamb value for separate loss')
-parser.add_argument('--lamb1', type=float, default=0.01, help='lamb1 value for compact loss')
 opt = parser.parse_args()
-# optimal1: --ycov=history --go=random --lamb=0.01 --lamb1=0.01
-# optimal2: --ycov=time --go=last --lamb=0.01 --lamb1=0.0
+# optimal1: --ycov=history --go=random 
+# optimal2: --ycov=time --go=last
 
 config = ConfigParser()
 config.read('params.txt', encoding='UTF-8')
@@ -331,15 +288,9 @@ console.setFormatter(formatter)
 logger.addHandler(handler)
 logger.addHandler(console)
 
-logger.info('lamb', opt.lamb)
-logger.info('lamb1', opt.lamb1)
 logger.info('experiment_city', opt.city)
 logger.info('experiment_month', opt.month)
 logger.info('model_name', opt.model)
-logger.info('memory_type', opt.memory)
-logger.info('mem_num', opt.mem_num)
-logger.info('mem_dim', opt.mem_dim)
-logger.info('meta_type', opt.meta)
 logger.info('decoder_type', opt.decoder)
 logger.info('go_type', opt.go)
 logger.info('ycov_type', opt.ycov)

@@ -4,19 +4,10 @@ adjdis_path = ../data/adjdis.npy
 adj01_path = ../data/adj01.npy
 road_path = ../data/capital_graph_link_info.csv
 
-[202105]
-test_month = ['202105']
-train_month = ['202110', '202111']
-traffic_path = ../data/capitaltrafficplus_202105.csv.gz
-
 [202110]
-test_month = ['202110']
-train_month = ['202105', '202111']
 traffic_path = ../data/capitaltrafficplus_202110.csv.gz
 
 [202111] 
-test_month = ['202111']
-train_month = ['202105', '202110']
 traffic_path = ../data/capitaltrafficplus_202111.csv.gz
 
 [202112] 
@@ -24,26 +15,5 @@ test_month = ['202112']
 train_month = ['202110', '202111']
 traffic_path = ../data/capitaltrafficplus_202112.csv.gz
 
-[tokyocircle]
-subroad_path = ../data/tokyocircle_road_idx.csv
-
-[tokyo589]
-subroad_path = ../data/tokyo589_road_idx.csv
-
-[tokyosmall]
-subroad_path = ../data/tokyosmall_road_idx.csv
-
-[tokyocore]
-subroad_path = ../data/tokyocore_road_idx.csv
-
 [tokyo]
 subroad_path = ../data/tokyo_road_idx.csv
-
-[kanagawa]
-subroad_path = ../data/kanagawa_road_idx.csv
-
-[bayshore]
-subroad_path = ../data/bayshore_road_idx.csv
-
-[capital]
-subroad_path = ../data/capital_road_idx.csv

@@ -2,39 +2,6 @@ import pandas as pd
 import numpy as np
 import jpholiday
 
-def generate_data_plus(months, months_path, road_path):
-    for month in months:
-        test_month = [month]
-        train_month = months.copy()
-        train_month.remove(month)
-        
-        df_train = pd.concat([pd.read_csv(months_path[month]) for month in train_month])
-        df_train.loc[df_train['speed_typea']<0, 'speed_typea'] = 0
-        df_train.loc[df_train['speed_typea']>200, 'speed_typea'] = 100
-        df_train['gps_timestamp'] = pd.to_datetime(df_train['gps_timestamp'])
-        df_train['weekdaytime'] = df_train['gps_timestamp'].dt.weekday * 144 + (df_train['gps_timestamp'].dt.hour * 60 + df_train['gps_timestamp'].dt.minute)//10
-        df_train = df_train[['linkid', 'weekdaytime', 'speed_typea']]
-
-        df_train_avg = df_train.groupby(['linkid', 'weekdaytime']).mean().reset_index()
-
-        df_test = pd.concat([pd.read_csv(months_path[month]) for month in test_month])
-        df_test.loc[df_test['speed_typea']<0, 'speed_typea'] = 0
-        df_test.loc[df_test['speed_typea']>200, 'speed_typea'] = 100
-        df_test['gps_timestamp'] = pd.to_datetime(df_test['gps_timestamp'])
-        df_test['weekdaytime'] = df_test['gps_timestamp'].dt.weekday * 144 + (df_test['gps_timestamp'].dt.hour * 60 + df_test['gps_timestamp'].dt.minute)//10
-
-        df = pd.merge(df_test, df_train_avg, on=['linkid', 'weekdaytime'], suffixes=(None, '_y'))
-        df_capital_link = pd.read_csv(road_path)
-        capital_linkid_list = df_capital_link['link_id'].unique()
-        timeslices = df_test.gps_timestamp.unique() # must be datetime
-        mux = pd.MultiIndex.from_product([capital_linkid_list, timeslices],names=['linkid', 'gps_timestamp'])
-        df = df.set_index(['linkid', 'gps_timestamp']).reindex(mux).reset_index()
-        df['weekdaytime'] = df['weekdaytime']/df['weekdaytime'].max()
-    
-        df.to_csv(f'../data/capitaltrafficplus_{month}.csv.gz', index=False)
-        print('generate capital traffic plus over', month, df.shape)
-        
-
 def get_data(data_path, N_link, subdata_path, feature_list):
     data = pd.read_csv(data_path)[feature_list].values
     data = data.reshape(-1, N_link, data.shape[-1])
