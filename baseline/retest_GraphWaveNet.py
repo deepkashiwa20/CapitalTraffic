@@ -149,7 +149,7 @@ num_variable = len(np.loadtxt(subroad_path).astype(int))
 N_link = config.getint('common', 'N_link')
 
 # all we need to do is to specify this path.
-path = f'./save/tokyo202112_GraphWaveNet_c2to1_20220204014332_time'
+path = f'./save/tokyo202112_GraphWaveNet_c2to1_20220204015732_history'
 
 keywords = path.split('_')
 model_name = keywords[1]
