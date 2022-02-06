@@ -22,7 +22,7 @@ Working projects for forecasting traffic flow at accidents and incidents
   <br> GW-Net (x only): tokyo202112_GraphWaveNet_c1to1_20220204015721
   <br> GW-Net (x + tcov): tokyo202112_GraphWaveNet_c2to1_20220204015728_time
   <br> GW-Net (x + hcov): tokyo202112_GraphWaveNet_c2to1_20220204015732_history
-  <br> GW-Net (x + tcov) is the default. 
+  <br> GW-Net (x + hcov) is used in our paper. 
   
   It can be reproduced by running the following commands:
   <br>cd ./baseline
