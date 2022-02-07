@@ -49,8 +49,8 @@ def generate_data_plus(train_month, months, months_path, road_path):
         df_capital_link = pd.read_csv(road_path)
         capital_linkid_list = df_capital_link['link_id'].unique()
         timeslices = df_test.gps_timestamp.unique() # must be datetime
-        mux = pd.MultiIndex.from_product([capital_linkid_list, timeslices],names=['linkid', 'gps_timestamp'])
-        df = df.set_index(['linkid', 'gps_timestamp']).reindex(mux).reset_index()
+        mux = pd.MultiIndex.from_product([timeslices, capital_linkid_list],names = ['gps_timestamp', 'linkid'])
+        df = df.set_index(['gps_timestamp', 'linkid']).reindex(mux).reset_index()
         df['weekdaytime'] = df['weekdaytime']/df['weekdaytime'].max()
     
         df.to_csv(f'../data/capitaltrafficplus_{month}.csv.gz', index=False)
