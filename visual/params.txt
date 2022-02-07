@@ -1,0 +1,19 @@
+[common]
+N_link = 2841
+adjdis_path = ../data/adjdis.npy
+adj01_path = ../data/adj01.npy
+road_path = ../data/capital_graph_link_info.csv
+
+[202110]
+traffic_path = ../data/capitaltrafficplus_202110.csv.gz
+
+[202111] 
+traffic_path = ../data/capitaltrafficplus_202111.csv.gz
+
+[202112] 
+test_month = ['202112']
+train_month = ['202110', '202111']
+traffic_path = ../data/capitaltrafficplus_202112.csv.gz
+
+[tokyo]
+subroad_path = ../data/tokyo_road_idx.csv
