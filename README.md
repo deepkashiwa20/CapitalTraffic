@@ -7,13 +7,13 @@ Working projects for forecasting traffic flow at accidents and incidents
   cd dataplus
   <br>python gen_dataplus.py
   
-* MMGCRN: save/tokyo202112_MMGCRN_c1to1_20220208044416_time
+* MMGCRN（tcov）: save/tokyo202112_MMGCRN_c1to1_20220208044416_time
   
   It can be reproduced by running the following commands:
   <br>cd model_ours
   <br>python retest_MMGCRN.py
 
-* GW-Net (x + tcov): save/tokyo202112_GraphWaveNet_c2to1_20220208044941_time
+* GW-Net (tcov): save/tokyo202112_GraphWaveNet_c2to1_20220208044941_time
   
   It can be reproduced by running the following commands:
   <br>cd baseline
