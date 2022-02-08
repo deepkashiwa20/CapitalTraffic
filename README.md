@@ -12,11 +12,6 @@ Working projects for forecasting traffic flow at accidents and incidents
   It can be reproduced by running the following commands:
   <br>cd model_ours
   <br>python retest_MMGCRN.py
-  
-  Other ablation models (GCRN, MetaGCRN, MemGCRN) can also be reproduced in a similar way.
-  <br>python retest_GCRN.py
-  <br>python retest_MetaGCRN.py
-  <br>python retest_MemGCRN.py
 
 * GW-Net (x + tcov): save/tokyo202112_GraphWaveNet_c2to1_20220208044941_time
   
