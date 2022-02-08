@@ -150,7 +150,7 @@ parser.add_argument('--history', type=bool, default=False, help='whether to use 
 parser.add_argument('--num_layers', type=int, default=1, help='number of layers')
 parser.add_argument('--hiddenunits', type=int, default=32, help='number of hidden units')
 parser.add_argument("--decoder", type=str, default='stepwise', help="which type of decoder: stepwise or stepwise")
-parser.add_argument('--ycov', type=str, default='history', help='which ycov to use: time or history')
+parser.add_argument('--ycov', type=str, default='time', help='which ycov to use: time or history')
 parser.add_argument('--go', type=str, default='random', help='which type of decoder go: random or last')
 parser.add_argument('--model', type=str, default='GCRN', help='which model to use')
 parser.add_argument('--gpu', type=int, default=3, help='which gpu to use')
@@ -174,7 +174,7 @@ N_link = config.getint('common', 'N_link')
 # traintest cmd: python traintest_GCRN.py --gpu=1 --ycov=history --go=random
 # retest cmd: python retest_GCRN.py 
 # The default setting is same with traintest cmd, so we can just run python retest_GCRN.py.
-path = f'./save/tokyo202112_GCRN_c1to1_20220204045452_history'
+path = f'../save/tokyo202112_GCRN_c1to1_20220208114653_time'
 
 keywords = path.split('_')
 model_name = keywords[1]

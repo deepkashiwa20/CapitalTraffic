@@ -265,7 +265,7 @@ parser.add_argument('--hiddenunits', type=int, default=32, help='number of hidde
 parser.add_argument('--mem_num', type=int, default=10, help='number of memory')
 parser.add_argument('--mem_dim', type=int, default=32, help='dimension of memory')
 parser.add_argument("--decoder", type=str, default='stepwise', help="which type of decoder: stepwise or stepwise")
-parser.add_argument('--ycov', type=str, default='history', help='which ycov to use: time or history')
+parser.add_argument('--ycov', type=str, default='time', help='which ycov to use: time or history')
 parser.add_argument('--go', type=str, default='random', help='which type of decoder go: random or last')
 parser.add_argument('--model', type=str, default='MemGCRN', help='which model to use')
 parser.add_argument('--gpu', type=int, default=3, help='which gpu to use')
@@ -302,7 +302,7 @@ _, filename = os.path.split(os.path.abspath(sys.argv[0]))
 filename = os.path.splitext(filename)[0]
 model_name = opt.model
 timestring = time.strftime('%Y%m%d%H%M%S', time.localtime())
-path = f'./save/{opt.city}{opt.month}_{model_name}_c{opt.channelin}to{opt.channelout}_{timestring}_{opt.ycov}'
+path = f'../save/{opt.city}{opt.month}_{model_name}_c{opt.channelin}to{opt.channelout}_{timestring}_{opt.ycov}'
 logging_path = f'{path}/{model_name}_{timestring}_logging.txt'
 score_path = f'{path}/{model_name}_{timestring}_scores.txt'
 epochlog_path = f'{path}/{model_name}_{timestring}_epochlog.txt'
