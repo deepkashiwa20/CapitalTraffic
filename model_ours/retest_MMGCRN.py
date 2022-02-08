@@ -170,7 +170,7 @@ parser.add_argument('--mem_dim', type=int, default=32, help='dimension of memory
 parser.add_argument("--memory", type=str, default='local', help="which type of memory: local or nomemory")
 parser.add_argument("--meta", type=str, default='yes', help="whether to use meta-graph: yes or any other")
 parser.add_argument("--decoder", type=str, default='stepwise', help="which type of decoder: stepwise or stepwise")
-parser.add_argument('--ycov', type=str, default='history', help='which ycov to use: time or history')
+parser.add_argument('--ycov', type=str, default='time', help='which ycov to use: time or history')
 parser.add_argument('--go', type=str, default='random', help='which type of decoder go: random or last')
 parser.add_argument('--model', type=str, default='MMGCRN', help='which model to use')
 parser.add_argument('--gpu', type=int, default=3, help='which gpu to use')
@@ -197,7 +197,7 @@ N_link = config.getint('common', 'N_link')
 # traintest cmd: python traintest_MMGCRN.py --gpu=0 --ycov=history --go=random --lamb=0.01 --lamb1=0.01.
 # retest cmd: python retest_MMGCRN.py 
 # The default setting is same with traintest cmd, so we can just run python retest_MMGCRN.py.
-path = f'./save/tokyo202112_MMGCRN_c1to1_20220204030801_history'
+path = f'../save/tokyo202112_MMGCRN_c1to1_20220208044416_time'
 
 keywords = path.split('_')
 model_name = keywords[1]
